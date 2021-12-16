@@ -38,10 +38,10 @@ all: slib bin
 
 
 ###########################################################
-# libraries 
+# libraries
 slib:
-	@mkdir -p $(@D)/lib 
-	$(CXX) -shared -o lib/libLTF.so $(SRC) -O0 -fPIC -g -Wall -Wno-unused-variable -std=gnu++17 -I. -I$(EIGEN_INCLUDE) $(ROOTINCLUDES) $(ROOTLIBS) 
+	@mkdir -p $(@D)/lib
+	$(CXX) -shared -o lib/libLTF.so $(SRC) -O0 -fPIC -g -Wall -Wno-unused-variable -std=gnu++17 -I. -I$(EIGEN_INCLUDE) $(ROOTINCLUDES) $(ROOTLIBS)
 
 root-slib:
 	root -b -q src/LTF.cxx+
@@ -49,7 +49,7 @@ root-slib:
 
 ###########################################################
 # programs
-programs =  example_CMSinclusivejets_NN30_BRSSWpaper 
+programs =  example_CMSinclusivejets_NN30_BRSSWpaper
 programs += example_CMSinclusivejets_MSTW_CMSpaper
 programs += example1_LTF_gaus
 programs += example1_LTF_gaus_NoROOT
@@ -57,11 +57,13 @@ programs += example2_LTF_gaus2D
 programs += example2_LTF_gaus2D_NoROOT
 programs += example3_LTF_gaus_sigma
 programs += mjet_mtop
+programs += mjet_width
+
 bin: $(programs)
 
 $(programs): %: %.cxx
-	@mkdir -p bin 
-	$(CXX) $< -o bin/$(notdir $@) -O0 -g -Wall -Wno-sign-compare  -Wno-unused-variable -Wl,-rpath,$(PWD)/lib -std=gnu++17 -I. -I$(EIGEN_INCLUDE) $(ROOTINCLUDES) -Llib/ -lLTF -lstdc++ $(ROOTLIBS) 
+	@mkdir -p bin
+	$(CXX) $< -o bin/$(notdir $@) -O0 -g -Wall -Wno-sign-compare  -Wno-unused-variable -Wl,-rpath,$(PWD)/lib -std=gnu++17 -I. -I$(EIGEN_INCLUDE) $(ROOTINCLUDES) -Llib/ -lLTF -lstdc++ $(ROOTLIBS)
 
 
 ###########################################################
@@ -77,8 +79,8 @@ clean:
 
 
 ###########################################################
-#bin: 
-#	$(CXX) example_CMSinclusivejets_NN30_BRSSWpaper.cxx -o example_CMSinclusivejets_NN30_BRSSWpaper -O2 -g -Wall -Wno-sign-compare -std=gnu++17 -I. -L. -lLTF  -lstdc++ $(WITH_ROOT) 
-#	$(CXX) bb4l_mtop.cxx -o bb4l_mtop -O2 -g -Wall -Wno-sign-compare -std=gnu++17 -L. -lLTF $(shell root-config --libs) -lstdc++ 
+#bin:
+#	$(CXX) example_CMSinclusivejets_NN30_BRSSWpaper.cxx -o example_CMSinclusivejets_NN30_BRSSWpaper -O2 -g -Wall -Wno-sign-compare -std=gnu++17 -I. -L. -lLTF  -lstdc++ $(WITH_ROOT)
+#	$(CXX) bb4l_mtop.cxx -o bb4l_mtop -O2 -g -Wall -Wno-sign-compare -std=gnu++17 -L. -lLTF $(shell root-config --libs) -lstdc++
 #example:
-#	$(CXX) example_LTF.cxx -o example_LTF -O2 -g -Wall -Wno-sign-compare -std=gnu++17 -L. -lLTF $(shell root-config --libs) -I$(shell root-config --incdir) -lstdc++ 
+#	$(CXX) example_LTF.cxx -o example_LTF -O2 -g -Wall -Wno-sign-compare -std=gnu++17 -L. -lLTF $(shell root-config --libs) -I$(shell root-config --incdir) -lstdc++

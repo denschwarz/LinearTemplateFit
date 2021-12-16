@@ -25,8 +25,9 @@ int mjet_mtop() {
    TH1::SetDefaultSumw2(false);
 
    // open the file with the templates and the data
-   TFile* f = new TFile("data/UnfoldingCombination_pseudo173_5.root", "READ");
-   // content:   
+   TFile* f = new TFile("data/UnfoldingCombination_pseudo171_5.root", "READ");
+   // TFile* f = new TFile("data/UnfoldingCombination_pseudo173_5.root", "READ");
+   // content:
    /*
    data;
    cov_total;
@@ -43,7 +44,7 @@ int mjet_mtop() {
    cov_stat_mtop1715;
    cov_stat_mtop1725;
    cov_stat_mtop1735;
-   cov_stat_mtop1755; 
+   cov_stat_mtop1755;
    */
 
    // get the data hist
@@ -61,9 +62,9 @@ int mjet_mtop() {
    }
 
    TH1D* mc_mtop1695 = (TH1D*)f->Get("mc_mtop1695");
-   TH1D* mc_mtop1715 = (TH1D*)f->Get("mc_mtop1715"); // this is the MC used to obtain the pseudo-data 
+   TH1D* mc_mtop1715 = (TH1D*)f->Get("mc_mtop1715"); // this is the MC used to obtain the pseudo-data
    TH1D* mc_mtop1725 = (TH1D*)f->Get("mc_mtop1725");
-   TH1D* mc_mtop1735 = (TH1D*)f->Get("mc_mtop1735"); 
+   TH1D* mc_mtop1735 = (TH1D*)f->Get("mc_mtop1735");
    TH1D* mc_mtop1755 = (TH1D*)f->Get("mc_mtop1755");
 
    TH2D* cov_tot  = (TH2D*)f->Get("cov_total");
@@ -71,6 +72,15 @@ int mjet_mtop() {
    TH2D* cov_exp  = (TH2D*)f->Get("cov_Exp");
    TH2D* cov_mod  = (TH2D*)f->Get("cov_Model");
    TH2D* cov_theo = (TH2D*)f->Get("cov_Theo");
+
+   vector<TH2D*> cov_model_single, cov_exp_single, cov_theo_single;
+   vector<string> exp_names = {"jec", "jer", "cor", "jms", "b-tagging", "pile-up", "prefire", "MuID", "MuTrigger", "ElID", "ElTrigger", "ElReco", "MCstat", "BGRrate", "Lumi"};
+   vector<string> model_names = {"FSR", "mass", "CR", "ISR", "hdamp", "UEtune", "scale"};
+   vector<string> theo_names = {"theo_scale", "theo_ISR", "theo_FSR", "theo_hdamp", "theo_UEtune", "theo_CR"};
+   for(auto name: exp_names) cov_exp_single.push_back((TH2D*)f->Get("cov_"+(TString)name));
+   for(auto name: model_names) cov_model_single.push_back((TH2D*)f->Get("cov_"+(TString)name));
+   for(auto name: theo_names) cov_theo_single.push_back((TH2D*)f->Get("cov_"+(TString)name));
+
 
 
 
@@ -83,17 +93,17 @@ int mjet_mtop() {
    ltf.UseNuisanceParameters(false);
    ltf.UseLogNormalUncertainties(false);
 
-   // --- add templates 
-   ltf.AddTemplate(mtvals[0], nbins, mc_mtop1695->GetArray()+1); 
-   ltf.AddTemplate(mtvals[1], nbins, mc_mtop1715->GetArray()+1); // this is the MC used to obtain the pseudo-data 
-   ltf.AddTemplate(mtvals[2], nbins, mc_mtop1725->GetArray()+1); 
-   ltf.AddTemplate(mtvals[3], nbins, mc_mtop1735->GetArray()+1); 
-   ltf.AddTemplate(mtvals[4], nbins, mc_mtop1755->GetArray()+1); 
+   // --- add templates
+   ltf.AddTemplate(mtvals[0], nbins, mc_mtop1695->GetArray()+1);
+   ltf.AddTemplate(mtvals[1], nbins, mc_mtop1715->GetArray()+1); // this is the MC used to obtain the pseudo-data
+   ltf.AddTemplate(mtvals[2], nbins, mc_mtop1725->GetArray()+1);
+   ltf.AddTemplate(mtvals[3], nbins, mc_mtop1735->GetArray()+1);
+   ltf.AddTemplate(mtvals[4], nbins, mc_mtop1755->GetArray()+1);
 
    // stat uncertainty in templates: get diagonal elements from cov matrix
    // note: stored on the template is actually the diaganol element of the theory uncertainty
    const vector<TString> names{"cov_stat_mtop1695", "cov_stat_mtop1715", "cov_stat_mtop1725", "cov_stat_mtop1735", "cov_stat_mtop1755"};
-   // sanity check  
+   // sanity check
    if (mtvals.size() != names.size()){
       cerr << "Not the same size of templates and template errors (mtvals and names)." << endl;
       exit(-1);
@@ -101,12 +111,12 @@ int mjet_mtop() {
    // fill the diagonal elements
    for (int i=0; i<mtvals.size(); ++i){
      vector<double> stat_unc_temp_sq;
-     TH2D* cov_mcstat = (TH2D*) f->Get(names[i]); 
+     TH2D* cov_mcstat = (TH2D*) f->Get(names[i]);
      for (int j=1; j<cov_mcstat->GetNbinsX()+1; ++j){
-       stat_unc_temp_sq.push_back(cov_mcstat->GetBinContent(j,j)); 
+       stat_unc_temp_sq.push_back(cov_mcstat->GetBinContent(j,j));
        //cout << "stat unc sq of bin " << j-1 << " = " << stat_unc_temp_sq[j-1] << endl;
      }
-     ltf.AddTemplateErrorSquared("statY", mtvals[i], nbins, stat_unc_temp_sq.data(), 0.); // set template error dY   
+     ltf.AddTemplateErrorSquared("statY", mtvals[i], nbins, stat_unc_temp_sq.data(), 0.); // set template error dY
    }
 
 
@@ -114,12 +124,15 @@ int mjet_mtop() {
    ltf.SetData( nbins, data->GetArray()+1);
    //ltf.AddUncorrelatedErrorSquared("stat.", nbins, data->GetSumw2()->GetArray()+1);
 
-   // hand over the covariance matrix, 
+   // hand over the covariance matrix,
    //AddCovMatrix(ltf, cov_tot, "total");
    AddCovMatrix(ltf, cov_stat, "stat");
-   AddCovMatrix(ltf, cov_exp,  "exp");
-   AddCovMatrix(ltf, cov_mod,  "mod");
-   AddCovMatrix(ltf, cov_theo, "theo");
+   // AddCovMatrix(ltf, cov_exp,  "exp");
+   for(unsigned int i=0; i<exp_names.size(); i++)   AddCovMatrix(ltf, cov_exp_single[i], exp_names[i]);
+   // AddCovMatrix(ltf, cov_mod,  "mod");
+   for(unsigned int i=0; i<model_names.size(); i++) AddCovMatrix(ltf, cov_model_single[i], model_names[i]);
+   // AddCovMatrix(ltf, cov_theo, "theo");
+   for(unsigned int i=0; i<theo_names.size(); i++)  AddCovMatrix(ltf, cov_theo_single[i], theo_names[i]);
 
    // remove one bin from the fit, because it is a normalised measurement
    // todo: adjust binning
@@ -140,7 +153,7 @@ int mjet_mtop() {
 
    // plot the results
    LTF_ROOTTools::plotLiTeFit(fit,bins, "norm. cross section", "m_{t} [GeV]", "Jet mass [GeV]");
-   
+
    return 0;
 
 }
